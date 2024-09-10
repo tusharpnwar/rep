@@ -1,0 +1,11 @@
+server {
+    listen 80;
+
+    location /rpc {
+        proxy_pass http://localhost:{{ rpc_port }};
+    }
+
+    location /metrics {
+        proxy_pass http://localhost:{{ metrics_port }};
+    }
+}

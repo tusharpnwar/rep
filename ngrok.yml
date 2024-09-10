@@ -1,0 +1,13 @@
+---
+- hosts: all
+  become: yes
+
+  tasks:
+    - name: Install ngrok
+      apt:
+        name: ngrok
+        state: present
+
+    - name: Set up ngrok for exposing RPC and metrics
+      shell: |
+        ngrok http 80

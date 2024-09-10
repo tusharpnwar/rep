@@ -1,0 +1,28 @@
+---
+- hosts: all
+  become: yes
+  vars:
+    rpc_port: 9944
+    metrics_port: 9615
+
+  tasks:
+    - name: Install NGINX
+      apt:
+        name: nginx
+        state: present
+
+    - name: Configure NGINX for reverse proxy
+      template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/sites-available/polkadot
+
+    - name: Enable NGINX site configuration
+      file:
+        src: /etc/nginx/sites-available/polkadot
+        dest: /etc/nginx/sites-enabled/polkadot
+        state: link
+
+    - name: Restart NGINX
+      systemd:
+        name: nginx
+        state: restarted

@@ -1,0 +1,72 @@
+---
+- hosts: all
+  become: yes
+  vars:
+    polkadot_version: '0.9.42'  # Example version, adjust as needed
+    polkadot_user: polkadot
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install dependencies
+      apt:
+        name: 
+          - curl
+          - wget
+          - systemd
+          - gcc
+          - make
+          - libssl-dev
+          - pkg-config
+          - git
+        state: present
+
+    - name: Add Polkadot user
+      user:
+        name: "{{ polkadot_user }}"
+        shell: /bin/bash
+        create_home: yes
+
+    - name: Download Polkadot binary
+      become_user: "{{ polkadot_user }}"
+      shell: |
+        curl -s https://get.polkadot.network -o polkadot.sh
+        chmod +x polkadot.sh
+        ./polkadot.sh
+      args:
+        chdir: /home/{{ polkadot_user }}
+
+    - name: Create Polkadot service file
+      copy:
+        dest: /etc/systemd/system/polkadot.service
+        content: |
+          [Unit]
+          Description=Polkadot Node
+          After=network.target
+
+          [Service]
+          User={{ polkadot_user }}
+          ExecStart=/home/{{ polkadot_user }}/.local/bin/polkadot --name "My Polkadot Node"
+          Restart=always
+          RestartSec=10
+          LimitNOFILE=8192
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: Enable and start Polkadot service
+      systemd:
+        name: polkadot
+        enabled: yes
+        state: started
+
+    - name: Check Polkadot node status
+      systemd:
+        name: polkadot
+        state: started
